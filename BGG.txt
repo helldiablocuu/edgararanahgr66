@@ -1,0 +1,563 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMSS - Evaluación NIL</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-title {
+            color: #c00;
+            font-size: 24px;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .header-subtitle {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        .header-evaluation {
+            color: #e74c3c;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .supervision-info {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .info-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+        }
+
+        .info-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        .info-group input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        #exportBtn {
+            background: #27ae60;
+        }
+
+        #exportBtn:hover {
+            background: #219653;
+        }
+
+        #deleteModeBtn {
+            background: #e74c3c;
+        }
+
+        #deleteModeBtn:hover {
+            background: #c0392b;
+        }
+
+        #deleteModeBtn.active {
+            background: #c0392b;
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.3);
+        }
+
+        .items-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 15px;
+        }
+
+        .item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            position: relative;
+        }
+
+        .item:hover {
+            transform: translateY(-2px);
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-mode .delete-btn {
+            display: flex;
+        }
+
+        .item-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .item-number {
+            background: #3498db;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .item-name-input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .checkbox-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-option input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-option label {
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* Colores para las opciones */
+        .checkbox-option:nth-child(1) label { color: #27ae60; font-weight: bold; } /* Limpio - verde */
+        .checkbox-option:nth-child(2) label { color: #95a5a6; font-weight: bold; } /* No Aplica - gris */
+        .checkbox-option:nth-child(3) label { color: #e74c3c; font-weight: bold; } /* Sucio - rojo */
+
+        @media (max-width: 768px) {
+            .supervision-info {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .items-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-title">INSTITUTO MEXICANO DEL SEGURO SOCIAL</div>
+            <div class="header-subtitle">Departamento de Limpieza e Higiene</div>
+            <div class="header-evaluation">Evaluación NIL</div>
+        </header>
+
+        <div class="supervision-info">
+            <div class="info-group">
+                <label for="areaSupervisada">Área Supervisada:</label>
+                <input type="text" id="areaSupervisada" placeholder="Nombre del área">
+            </div>
+            <div class="info-group">
+                <label for="semanaNumero">Semana Número:</label>
+                <input type="number" id="semanaNumero" min="1" max="52" placeholder="Número de semana">
+            </div>
+            <div class="info-group">
+                <label for="supervisionDate">Fecha de Supervisión:</label>
+                <input type="date" id="supervisionDate">
+            </div>
+            <div class="info-group">
+                <label for="supervisorName">Supervisor:</label>
+                <input type="text" id="supervisorName" placeholder="Nombre del supervisor">
+            </div>
+            <div class="info-group">
+                <label for="ayudanteName">Ayudante que Revisó:</label>
+                <input type="text" id="ayudanteName" placeholder="Nombre del ayudante">
+            </div>
+            <div class="info-group">
+                <label for="auxiliarName">Auxiliar del Área:</label>
+                <input type="text" id="auxiliarName" placeholder="Nombre del auxiliar">
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="resetBtn">Restablecer Todo</button>
+            <button id="deleteModeBtn">Modo Eliminar Elementos</button>
+            <button id="exportBtn">Exportar a Excel</button>
+        </div>
+
+        <div class="items-container" id="itemsContainer"></div>
+    </div>
+
+    <script>
+        // Configuración inicial
+        const TOTAL_ITEMS = 80;
+        const DEFAULT_OPTIONS = ['Limpio', 'No Aplica', 'Sucio'];
+        let deleteMode = false;
+        
+        // Establecer fecha actual por defecto y calcular semana
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            document.getElementById('supervisionDate').value = todayStr;
+            
+            // Calcular número de semana
+            const start = new Date(today.getFullYear(), 0, 1);
+            const days = Math.floor((today - start) / (24 * 60 * 60 * 1000));
+            const weekNumber = Math.ceil((days + start.getDay() + 1) / 7);
+            document.getElementById('semanaNumero').value = weekNumber;
+        });
+        
+        // Generar elementos iniciales
+        function generateItems() {
+            const container = document.getElementById('itemsContainer');
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= TOTAL_ITEMS; i++) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'item';
+                itemDiv.dataset.index = i;
+                
+                itemDiv.innerHTML = `
+                    <button class="delete-btn" data-index="${i}">×</button>
+                    <div class="item-header">
+                        <div class="item-number">${i}</div>
+                        <input type="text" class="item-name-input" value="Elemento ${i}" data-index="${i}">
+                    </div>
+                    <div class="checkbox-group">
+                        ${DEFAULT_OPTIONS.map((option, idx) => `
+                            <div class="checkbox-option">
+                                <input type="checkbox" id="item-${i}-opt-${idx}" data-item="${i}" data-option="${idx}">
+                                <label for="item-${i}-opt-${idx}">${option}</label>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                container.appendChild(itemDiv);
+            }
+            
+            // Agregar event listeners
+            addEventListeners();
+        }
+        
+        // Agregar event listeners a los inputs y checkboxes
+        function addEventListeners() {
+            // Eventos para inputs de nombre
+            document.querySelectorAll('.item-name-input').forEach(input => {
+                input.addEventListener('blur', function() {
+                    if (this.value.trim() === '') {
+                        this.value = `Elemento ${this.dataset.index}`;
+                    }
+                });
+            });
+            
+            // Eventos para checkboxes (comportamiento de exclusión mutua por defecto)
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const itemIndex = this.dataset.item;
+                    const currentOption = parseInt(this.dataset.option);
+                    
+                    // Si se marca una opción, desmarcar las otras del mismo elemento
+                    if (this.checked) {
+                        document.querySelectorAll(`input[data-item="${itemIndex}"]`).forEach(cb => {
+                            if (parseInt(cb.dataset.option) !== currentOption) {
+                                cb.checked = false;
+                            }
+                        });
+                    }
+                });
+            });
+            
+            // Eventos para botones de eliminar
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const index = this.dataset.index;
+                    deleteItem(index);
+                });
+            });
+        }
+        
+        // Eliminar un elemento
+        function deleteItem(index) {
+            if (confirm(`¿Está seguro de que desea eliminar el Elemento ${index}?`)) {
+                const item = document.querySelector(`.item[data-index="${index}"]`);
+                if (item) {
+                    item.remove();
+                    reindexItems();
+                }
+            }
+        }
+        
+        // Reindexar elementos después de eliminar
+        function reindexItems() {
+            const items = document.querySelectorAll('.item');
+            items.forEach((item, idx) => {
+                const newIndex = idx + 1;
+                const oldIndex = item.dataset.index;
+                item.dataset.index = newIndex;
+                
+                // Actualizar número
+                const numberElement = item.querySelector('.item-number');
+                if (numberElement) {
+                    numberElement.textContent = newIndex;
+                }
+                
+                // Actualizar input de nombre
+                const nameInput = item.querySelector('.item-name-input');
+                if (nameInput) {
+                    nameInput.dataset.index = newIndex;
+                    // Solo actualizar el nombre si sigue siendo "Elemento X"
+                    if (nameInput.value === `Elemento ${oldIndex}`) {
+                        nameInput.value = `Elemento ${newIndex}`;
+                    }
+                }
+                
+                // Actualizar checkboxes y labels
+                const checkboxes = item.querySelectorAll('input[type="checkbox"]');
+                const labels = item.querySelectorAll('label');
+                
+                checkboxes.forEach((checkbox, optIdx) => {
+                    const oldId = checkbox.id;
+                    checkbox.id = `item-${newIndex}-opt-${optIdx}`;
+                    checkbox.dataset.item = newIndex;
+                });
+                
+                labels.forEach((label, optIdx) => {
+                    label.htmlFor = `item-${newIndex}-opt-${optIdx}`;
+                });
+                
+                // Actualizar botón de eliminar
+                const deleteBtn = item.querySelector('.delete-btn');
+                if (deleteBtn) {
+                    deleteBtn.dataset.index = newIndex;
+                }
+            });
+        }
+        
+        // Alternar modo eliminar
+        function toggleDeleteMode() {
+            const container = document.querySelector('.items-container');
+            deleteMode = !deleteMode;
+            const deleteBtn = document.getElementById('deleteModeBtn');
+            
+            if (deleteMode) {
+                container.classList.add('delete-mode');
+                deleteBtn.classList.add('active');
+                deleteBtn.textContent = 'Salir del Modo Eliminar';
+            } else {
+                container.classList.remove('delete-mode');
+                deleteBtn.classList.remove('active');
+                deleteBtn.textContent = 'Modo Eliminar Elementos';
+            }
+        }
+        
+        // Restablecer todos los elementos
+        function resetAll() {
+            if (confirm('¿Está seguro de que desea restablecer todos los elementos a su estado inicial?')) {
+                generateItems();
+                toggleDeleteMode(); // Asegurar que salga del modo eliminar
+            }
+        }
+        
+        // Exportar a Excel
+        function exportToExcel() {
+            const areaSupervisada = document.getElementById('areaSupervisada').value;
+            const semanaNumero = document.getElementById('semanaNumero').value;
+            const supervisionDate = document.getElementById('supervisionDate').value;
+            const supervisorName = document.getElementById('supervisorName').value;
+            const ayudanteName = document.getElementById('ayudanteName').value;
+            const auxiliarName = document.getElementById('auxiliarName').value;
+            
+            if (!areaSupervisada.trim()) {
+                alert('Por favor ingrese el área supervisada');
+                return;
+            }
+            
+            if (!semanaNumero) {
+                alert('Por favor ingrese el número de semana');
+                return;
+            }
+            
+            if (!supervisionDate) {
+                alert('Por favor ingrese la fecha de supervisión');
+                return;
+            }
+            
+            if (!supervisorName.trim()) {
+                alert('Por favor ingrese el nombre del supervisor');
+                return;
+            }
+            
+            // Obtener todos los elementos restantes
+            const items = document.querySelectorAll('.item');
+            if (items.length === 0) {
+                alert('No hay elementos para exportar');
+                return;
+            }
+            
+            // Datos de supervisión
+            const supervisionData = [
+                ['Área Supervisada:', areaSupervisada],
+                ['Semana Número:', semanaNumero],
+                ['Fecha de Supervisión:', supervisionDate],
+                ['Supervisor:', supervisorName],
+                ['Ayudante que Revisó:', ayudanteName || ''],
+                ['Auxiliar del Área:', auxiliarName || ''],
+                ['']
+            ];
+            
+            // Datos de los elementos
+            const elementsData = [];
+            elementsData.push(['Elemento', 'Nombre', 'Limpio', 'No Aplica', 'Sucio']);
+            
+            items.forEach(item => {
+                const index = item.dataset.index;
+                const itemNameInput = item.querySelector('.item-name-input');
+                const itemName = itemNameInput ? itemNameInput.value : `Elemento ${index}`;
+                
+                const row = [parseInt(index), itemName];
+                
+                // Obtener estado de las opciones
+                DEFAULT_OPTIONS.forEach((option, idx) => {
+                    const checkbox = item.querySelector(`input[data-item="${index}"][data-option="${idx}"]`);
+                    row.push(checkbox ? checkbox.checked : false);
+                });
+                
+                elementsData.push(row);
+            });
+            
+            // Combinar todos los datos
+            const allData = [...supervisionData, ...elementsData];
+            
+            // Crear hoja de trabajo
+            const ws = XLSX.utils.aoa_to_sheet(allData);
+            
+            // Ajustar el ancho de las columnas
+            const colWidths = [
+                { wch: 25 }, // Columna A
+                { wch: 30 }, // Columna B
+                { wch: 10 }, // Columna C
+                { wch: 12 }, // Columna D
+                { wch: 10 }  // Columna E
+            ];
+            ws['!cols'] = colWidths;
+            
+            // Crear libro de trabajo
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Evaluación NIL');
+            
+            // Exportar archivo
+            XLSX.writeFile(wb, 'evaluacion_nil_imss.xlsx');
+        }
+        
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            generateItems();
+            
+            document.getElementById('resetBtn').addEventListener('click', resetAll);
+            document.getElementById('deleteModeBtn').addEventListener('click', toggleDeleteMode);
+            document.getElementById('exportBtn').addEventListener('click', exportToExcel);
+        });
+    </script>
+</body>
+</html>
+```
